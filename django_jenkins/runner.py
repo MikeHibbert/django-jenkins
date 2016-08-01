@@ -6,7 +6,17 @@ from itertools import groupby
 from xml.sax.saxutils import XMLGenerator
 from xml.sax.xmlreader import AttributesImpl
 from django.conf import settings
-from django.test.simple import DjangoTestSuiteRunner, reorder_suite
+try:
+    # Django versions >= 1.9
+    from django.utils.module_loading import import_module
+    from django.test.runner import DiscoverRunner
+    django_version = "1.9+"
+except ImportError:
+    # Django versions < 1.9
+    django_version = "below 1.9"
+    from django.utils.importlib import import_module
+    from django.test.simple import DjangoTestSuiteRunner, reorder_suite
+    
 from django.test.testcases import TestCase
 from django.utils.unittest import TestSuite, TextTestResult, TextTestRunner
 from django_jenkins import signals
@@ -243,7 +253,49 @@ class XMLTestResult(TextTestResult):
             document.endDocument()
 
 
-class CITestSuiteRunner(DjangoTestSuiteRunner):
+if django_version == "below 1.9"
+    class CITestSuiteRunner(DjangoTestSuiteRunner):
+        """
+        Continuous integration test runner
+        """
+        def __init__(self, output_dir, with_reports=True, **kwargs):
+            super(CITestSuiteRunner, self).__init__(**kwargs)
+            self.with_reports = with_reports
+            self.output_dir = output_dir
+    
+        def setup_test_environment(self, **kwargs):
+            super(CITestSuiteRunner, self).setup_test_environment()
+            signals.setup_test_environment.send(sender=self)
+    
+        def teardown_test_environment(self, **kwargs):
+            super(CITestSuiteRunner, self).teardown_test_environment()
+            signals.teardown_test_environment.send(sender=self)
+    
+        def setup_databases(self):
+            if 'south' in settings.INSTALLED_APPS:
+                from south.management.commands import (
+                        patch_for_test_db_setup  # pylint: disable=F0401
+                        )
+                patch_for_test_db_setup()
+            return super(CITestSuiteRunner, self).setup_databases()
+    
+        def build_suite(self, test_labels, extra_tests=None, **kwargs):
+            suite = TestSuite()
+            signals.build_suite.send(sender=self, suite=suite)
+            return reorder_suite(suite, (TestCase,))
+    
+        def run_suite(self, suite, **kwargs):
+            signals.before_suite_run.send(sender=self)
+            result = TextTestRunner(buffer=True,
+                    resultclass=XMLTestResult,
+                    verbosity=self.verbosity
+                    ).run(suite)
+            if self.with_reports:
+                result.dump_xml(self.output_dir)
+            signals.after_suite_run.send(sender=self)
+            return result
+else:
+    class CITestSuiteRunner(DiscoverRunner):
     """
     Continuous integration test runner
     """
