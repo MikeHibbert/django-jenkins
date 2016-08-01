@@ -11,14 +11,16 @@ try:
     from django.utils.module_loading import import_module
     from django.test.runner import DiscoverRunner
     django_version = "1.9+"
+    from unittest import TestSuite, TextTestResult, TextTestRunner
 except ImportError:
     # Django versions < 1.9
     django_version = "below 1.9"
     from django.utils.importlib import import_module
     from django.test.simple import DjangoTestSuiteRunner, reorder_suite
+    from django.utils.unittest import TestSuite, TextTestResult, TextTestRunner
     
 from django.test.testcases import TestCase
-from django.utils.unittest import TestSuite, TextTestResult, TextTestRunner
+
 from django_jenkins import signals
 from django_jenkins.functions import total_seconds
 
