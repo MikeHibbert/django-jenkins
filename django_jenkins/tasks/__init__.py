@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 import os
 from django.conf import settings
-from django.utils.importlib import import_module
+try:
+    # Django versions >= 1.9
+    from django.utils.module_loading import import_module
+    django_version = "1.9+"
+
+except ImportError:
+    # Django versions < 1.9
+    django_version = "below 1.9"
+    from django.utils.importlib import import_module
 
 
 class BaseTask(object):
