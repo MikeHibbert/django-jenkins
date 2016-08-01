@@ -5,7 +5,14 @@ import sys
 from optparse import make_option, OptionGroup
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.utils.importlib import import_module
+
+try:
+    # Django versions >= 1.9
+    from django.utils.module_loading import import_module
+except ImportError:
+    # Django versions < 1.9
+    from django.utils.importlib import import_module
+    
 from django_jenkins import signals
 from django_jenkins.runner import CITestSuiteRunner
 
