@@ -9,7 +9,7 @@ from django.conf import settings
 try:
     # Django versions >= 1.9
     from django.utils.module_loading import import_module
-    from django.test.runner import DiscoverRunner
+    from django.test.runner import DiscoverRunner, reorder_suite
     django_version = "1.9+"
     from unittest import TestSuite, TextTestResult, TextTestRunner
 except ImportError:
