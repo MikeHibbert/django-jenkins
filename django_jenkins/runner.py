@@ -253,7 +253,7 @@ class XMLTestResult(TextTestResult):
             document.endDocument()
 
 
-if django_version == "below 1.9"
+if django_version == "below 1.9":
     class CITestSuiteRunner(DjangoTestSuiteRunner):
         """
         Continuous integration test runner
